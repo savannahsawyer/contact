@@ -1,50 +1,52 @@
 import express from "express";
-import nodemailer from "nodemailer";
+import fetch from "node-fetch";
 
 const app = express();
 app.use(express.json());
 
-const HOST = process.env.SMTP_HOST;
-const PORT = Number(process.env.SMTP_PORT);
-const USER = process.env.SMTP_USER;
-const PASS = process.env.SMTP_PASS;
-
 app.post("/send", async (req, res) => {
   const { from, to, subject, text } = req.body;
 
-  console.log("Starting to send email...");
+  if (!from || !to || !subject || !text) {
+    return res.status(400).json({ ok: false, error: "Missing required fields" });
+  }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: Number(process.env.SMTP_PORT) === 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.SENDGRID_API_KEY}`,
+        "Content-Type": "application/json",
       },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000
+      body: JSON.stringify({
+        personalizations: [
+          {
+            to: [{ email: to }],
+          },
+        ],
+        from: { email: from },
+        subject: subject,
+        content: [
+          {
+            type: "text/plain",
+            value: text,
+          },
+        ],
+      }),
     });
 
-    console.log("Verifying SMTP credentials...");
-    await transporter.verify();            // ✅ Check login before send
-    console.log("SMTP login verified ✅");
-
-    await transporter.sendMail({ from, to, subject, text });
-    console.log("Email sent ✅");
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("SendGrid API Error:", errText);
+      return res.status(500).json({ ok: false, error: errText });
+    }
 
     res.json({ ok: true });
   } catch (err) {
-    console.error("SMTP send error ❌", err);
+    console.error("Error sending email:", err);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-
-
-const portNumber = process.env.PORT || 3000;
-app.listen(portNumber, () => {
-  console.log(`SMTP bridge running on port ${portNumber}`);
-});
+const port = process.env.PORT || 8080;
+app.listen(port, () => console.log(`SendGrid bridge running on port ${port}`));
