@@ -43,6 +43,7 @@ app.post("/send", async (req, res) => {
 });
 
 
+
 const portNumber = process.env.PORT || 3000;
 app.listen(portNumber, () => {
   console.log(`SMTP bridge running on port ${portNumber}`);
