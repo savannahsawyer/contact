@@ -4,17 +4,18 @@ import nodemailer from "nodemailer";
 const app = express();
 app.use(express.json());
 
-// Read from environment once
+// Pull them from environment just once
 const HOST = process.env.SMTP_HOST;
 const PORT = Number(process.env.SMTP_PORT);
 const USER = process.env.SMTP_USER;
 const PASS = process.env.SMTP_PASS;
+
 app.get("/", (req, res) => {
   res.json({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    user: process.env.SMTP_USER ? "(set)" : "(missing)",
-    pass: process.env.SMTP_PASS ? "(set)" : "(missing)"
+    host: HOST,
+    port: PORT,
+    user: USER ? "(set)" : "(missing)",
+    pass: PASS ? "(set)" : "(missing)"
   });
 });
 
