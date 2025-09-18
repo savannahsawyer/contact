@@ -16,19 +16,21 @@ app.post("/send", async (req, res) => {
 
   try {
     const transporter = nodemailer.createTransport({
-      host: HOST,
-      port: PORT,
-      secure: PORT === 465,
-      auth: { user: USER, pass: PASS },
-      connectionTimeout: 10000, // 10s
-      greetingTimeout: 10000,   // 10s
-      socketTimeout: 10000      // 10s
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: Number(process.env.SMTP_PORT) === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000
     });
 
-    console.log("Connecting to SMTP:", HOST, PORT);
-
-    await transporter.verify();
-    console.log("SMTP connection verified ✅");
+    console.log("Verifying SMTP credentials...");
+    await transporter.verify();            // ✅ Check login before send
+    console.log("SMTP login verified ✅");
 
     await transporter.sendMail({ from, to, subject, text });
     console.log("Email sent ✅");
@@ -39,6 +41,7 @@ app.post("/send", async (req, res) => {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
+
 
 const portNumber = process.env.PORT || 3000;
 app.listen(portNumber, () => {
