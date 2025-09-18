@@ -4,15 +4,21 @@ import nodemailer from "nodemailer";
 const app = express();
 app.use(express.json());
 
+// Read from environment once
+const HOST = process.env.SMTP_HOST;
+const PORT = Number(process.env.SMTP_PORT);
+const USER = process.env.SMTP_USER;
+const PASS = process.env.SMTP_PASS;
+
 app.post("/send", async (req, res) => {
-  const { host, port, user, pass, from, to, subject, text } = req.body;
+  const { from, to, subject, text } = req.body;
 
   try {
     const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: Number(port) === 465,
-      auth: { user, pass }
+      host: HOST,
+      port: PORT,
+      secure: PORT === 465,
+      auth: { user: USER, pass: PASS },
     });
 
     await transporter.sendMail({ from, to, subject, text });
